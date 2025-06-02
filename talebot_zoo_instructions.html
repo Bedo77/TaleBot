@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaleBot - Enhanced Zoo Visit Instructions</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 20px; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        h1 { color: #2a6594; text-align: center; }
+        h2 { color: #3079ab; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .map-info { text-align: center; margin-bottom: 20px; }
+        .map-info img { max-width: 100%; height: auto; border: 2px solid #ddd; border-radius: 5px; }
+        .commands-summary { background-color: #eef6fc; padding: 15px; border-radius: 5px; margin-top: 10px; }
+        .command-list li { margin-bottom: 8px; }
+        code { background-color: #e0e0e0; padding: 3px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; }
+        .action-link { display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .action-link:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TaleBot Online Practice: Enhanced Zoo Visit!</h1>
+        <p>Welcome to the upgraded virtual Zoo Visit! Now featuring a 3D TaleBot and more commands. Your mission is to program TaleBot to visit the <strong>Panda</strong>.</p>
+
+        <h2>Objective:</h2>
+        <p>Program the 3D TaleBot to navigate the zoo map from its starting position to the Panda's enclosure.</p>
+
+        <h2>The Virtual Zoo Map:</h2>
+        <div class="map-info">
+            <p>You'll be programming TaleBot on a vibrant zoo map like the one below. TaleBot will start near the bottom-left. The Panda is located towards the upper-middle area.</p>
+            <!-- Replace 'zoo_map_preview.jpg' with an actual smaller preview if you have one, or remove if the description is enough -->
+            <img src="zoo_map.jpg" alt="Preview of the Zoo Map" style="width:400px;"/>
+            <p>(The actual interactive map is in the environment)</p>
+        </div>
+
+        <h2>How to Program Your 3D TaleBot:</h2>
+        <p>In the <a href="talebot_zoo_environment.html" target="_blank" class="action-link" style="background-color:#007bff;">Zoo Visit Environment</a>, you'll find:</p>
+        <ul class="command-list">
+            <li>A 3D model of TaleBot on the map.</li>
+            <li>Command buttons to build your program.</li>
+        </ul>
+        <div class="commands-summary">
+            <h3>Available Commands:</h3>
+            <ul>
+                <li><strong>Movement:</strong> <code>Move Forward</code>, <code>Move Backward</code>, <code>Turn Left (90°)</code>, <code>Turn Right (90°)</code>.</li>
+                <li><strong>Program Control:</strong>
+                    <ul>
+                        <li><code>Go!</code>: Executes the current program sequence.</li>
+                        <li><code>Clear All</code>: Deletes the entire program.</li>
+                        <li><code>Delete Last</code>: Removes the last command added.</li>
+                    </ul>
+                </li>
+                <li><strong>Advanced Commands:</strong>
+                    <ul>
+                        <li><code>Repeat Program + / -</code>: Set how many times the entire program sequence will repeat.</li>
+                        <li><code>Record Voice</code>: Simulate recording a short voice message (you'll type it in).</li>
+                        <li><code>Add 'Play Recording' to Program</code>: Adds a command to play your recorded message.</li>
+                        <li><code>Random Dance</code>: Adds a command for TaleBot to perform a conceptual dance.</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <h3>Programming Steps:</h3>
+        <ol>
+            <li>Click the command buttons in the desired sequence. They will appear in the "Program Sequence" area.</li>
+            <li>TaleBot starts facing "North" (towards the top of the map initially).</li>
+            <li>Use the <code>Repeat Program</code> buttons if you want the whole sequence to run multiple times.</li>
+            <li>To reach the Panda (estimate its position visually on the map in the environment):
+                <ul>
+                    <li>You'll likely need a combination of <code>Move Forward</code> and <code>Turn Left/Right</code> commands.</li>
+                    <li>Example: <code>Move Forward</code>, <code>Move Forward</code>, <code>Turn Right</code>, <code>Move Forward</code>... (This is just an example, you'll need to figure out the exact path!)</li>
+                </ul>
+            </li>
+            <li>Once your program is ready, click the <code>Go!</code> button.</li>
+            <li>If TaleBot reaches the Panda, you'll get a success message and a little celebration! If not, use <code>Delete Last</code> or <code>Clear All</code> and try again.</li>
+        </ol>
+
+        <p style="text-align:center;">
+            <strong>Ready to guide the 3D TaleBot?</strong><br>
+            <a href="talebot_zoo_environment.html" target="_blank" class="action-link">Open the Enhanced Zoo Visit Environment!</a>
+        </p>
+    </div>
+</body>
+</html>

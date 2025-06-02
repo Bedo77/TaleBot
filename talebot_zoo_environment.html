@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaleBot - Interactive Zoo Adventure</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 10px; background-color: #eef6fc; }
+        .main-layout { display: flex; gap: 20px; align-items: flex-start; padding: 10px; }
+        .map-and-select { display: flex; flex-direction: column; align-items: center; gap: 10px;}
+        #map-selector { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 1em; }
+
+        #map-container {
+            width: 600px; /* Adjust as needed based on your map aspect ratios */
+            height: 450px; /* Adjusted for the new map image's likely aspect ratio */
+            border: 3px solid #0056b3;
+            position: relative;
+            background-size: contain; /* Use contain to see the whole map, adjust height if needed */
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: grab; /* For dragging */
+        }
+        #map-container.dragging { cursor: grabbing; }
+
+        #talebot-viewer {
+            width: 50px; /* Adjust visual size of bot */
+            height: 50px;
+            position: absolute;
+            /* background-color: rgba(255, 0, 0, 0.3); /* DEBUG: visual aid for bot bounds */
+            pointer-events: none; /* Let map container handle drag initially */
+            /* transform-origin set by model-viewer based on model pivot */
+        }
+        /* Command Panel Styling based on command_buttons.jpg */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 15px; /* More rounded */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 220px; /* Approximate width */
+        }
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .controls-panel button {
+            width: 60px; height: 60px; /* Square buttons */
+            border-radius: 12px; /* Rounder */
+            border: none;
+            font-size: 1.8em; /* For icons or larger text */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .controls-panel button:active { transform: scale(0.95); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+
+        /* Specific button colors and icons (using Unicode symbols) */
+        .btn-clear { background-color: #d9534f; grid-column: 1; } /* Red X */
+        .btn-fwd { background-color: #f0ad4e; grid-column: 2; } /* Orange Arrow Up */
+        .btn-repeat { background-color: #5cb85c; grid-column: 3; } /* Green Repeat */
+        .btn-left { background-color: #5bc0de; grid-column: 1; } /* Blue Arrow Left */
+        .btn-go { background-color: #ffc107; color: #333; grid-column: 2; font-size: 1.5em; font-weight: bold;} /* Yellow Play */
+        .btn-right { background-color: #5bc0de; grid-column: 3; } /* Blue Arrow Right */
+        .btn-record { background-color: #777; grid-column: 1; } /* Grey Mic */
+        .btn-bwd { background-color: #f0ad4e; grid-column: 2; } /* Orange Arrow Down */
+        .btn-dance { background-color: #9c27b0; grid-column: 3; } /* Purple Dance */
+
+        .other-controls { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .other-controls button { width: 100%; height: auto; padding: 10px; font-size: 0.9em; border-radius: 8px; }
+        .btn-play-rec { background-color: #4caf50; }
+        .btn-delete-last { background-color: #6c757d; }
+        .btn-clear-all { background-color: #dc3545; }
+        #repeat-display { text-align: center; font-weight: bold; margin: 5px 0; }
+
+
+        .program-display { border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f8f9fa; width: 220px;}
+        .program-display h2 { margin-top: 0; font-size: 1.1em; color: #333;}
+        #program-sequence-display { min-height: 60px; background-color: #fff; padding: 8px; border-radius: 3px; border: 1px dashed #ddd; font-size: 0.9em;}
+        .program-block-item { background-color: #007bff; color: white; padding: 4px 6px; margin: 2px 0; border-radius: 3px; display: block;}
+
+        #feedback { margin-top: 10px; font-weight: bold; min-height: 22px; text-align: center; font-size: 1.1em; color: #0056b3; width: 100%;}
+    </style>
+</head>
+<body>
+    <h1>TaleBot's Interactive World Adventure!</h1>
+    <div class="main-layout">
+        <div class="map-and-select">
+            <select id="map-selector" onchange="changeMap()">
+                <option value="zoo_map.jpg">Zoo Visit Map</option>
+                <option value="plants.jpg">Plant Life Cycle Map</option>
+            </select>
+            <div id="map-container">
+                <model-viewer id="talebot-viewer" src="./models/TaleBot.glb" alt="TaleBot 3D Model"
+                              interaction-prompt="none" camera-controls-none disable-zoom
+                              shadow-intensity="0.7">
+                </model-viewer>
+            </div>
+            <div id="feedback">Select a map and program TaleBot!</div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="command-grid">
+                <button class="btn-clear" onclick="clearProgram(false, true)" title="Delete Last Command">✘</button> <!-- Clear Last -->
+                <button class="btn-fwd" onclick="addCommand('F')" title="Move Forward">⬆</button>
+                <button class="btn-repeat" onclick="changeRepeat(1)" title="Increase Repeats (+)">↻</button> <!-- Repeat -->
+
+                <button class="btn-left" onclick="addCommand('L')" title="Turn Left">⬅</button>
+                <button class="btn-go" onclick="runProgram()" title="Go / Play">▶</button>
+                <button class="btn-right" onclick="addCommand('R')" title="Turn Right">➡</button>
+
+                <button class="btn-record" onclick="recordVoice()" title="Record Voice">🎤</button>
+                <button class="btn-bwd" onclick="addCommand('B')" title="Move Backward">⬇</button>
+                <button class="btn-dance" onclick="addCommand('DANCE')" title="Random Dance">💃</button>
+            </div>
+            <div id="repeat-display">Repeat: 1x</div>
+            <div class="other-controls">
+                <button class="btn-play-rec" onclick="addCommand('PLAY_REC')">Add 'Play Recording'</button>
+                <button class="btn-clear-all" onclick="clearProgram(true, false)" title="Clear Entire Program">Clear All Program</button>
+            </div>
+        </div>
+
+        <div class="program-display">
+            <h2>Program Sequence:</h2>
+            <div id="program-sequence-display">(empty)</div>
+        </div>
+    </div>
+
+    <script>
+        let program = [];
+        let botState = { x: 15, y: 88, angle: 0, isMovingAutomated: false }; // Start bottom-left-ish, facing UP. x,y in %
+        const mapContainer = document.getElementById('map-container');
+        const modelViewer = document.getElementById('talebot-viewer');
+        const feedbackElement = document.getElementById('feedback');
+        const mapSelector = document.getElementById('map-selector');
+        
+        let stepPercentage = 18; // Tuned for the new map's grid size visually
+        let repeatCount = 1;
+        let recordedMessage = "";
+        let isDragging = false;
+        let dragOffsetX, dragOffsetY;
+        let awaitingZooTourStart = false;
+        let currentMap = "zoo_map.jpg"; // Default
+
+        // --- Map Specific Data ---
+        const mapData = {
+            "zoo_map.jpg": {
+                imagePath: "zoo_map.jpg", // Your new zoo map image
+                // IMPORTANT: Estimate these % values from your new zoo_map.jpg when it's in the 600x450 container
+                // (0,0) is top-left of map-container
+                // Red Arrow Square: Top-left of map (TaleBot's face icon)
+                redArrowHotspot:    { xMin: 2, yMin: 2, xMax: 15, yMax: 18 },
+                // Yellow Arrow Square: "Instructions" button
+                yellowArrowHotspot: { xMin: 2, yMin: 28, xMax: 15, yMax: 42 },
+                // Green Arrow: Zoo Entrance
+                zooEntranceTarget:  { x: 10, y: 75, angle: 0}, // Facing up towards inside the zoo
+                // Target for general programming (e.g., Panda, or if Panda is hard to target, choose Lion)
+                // Let's aim for the Lion as a primary target for programmed movement
+                mainTarget: { name: "Lion", x: 65, y: 12 },
+                tourPath: [ // Define path for automated tour
+                    { x: 30, y: 75, animal: "Elephant area", angle: 0 }, // Near Elephant
+                    { x: 30, y: 45, animal: "Tiger spot", angle: 0 },    // Near Tiger
+                    { x: 65, y: 45, animal: "Ice Cream cart", angle: 90 }, // Near Ice Cream
+                    { x: 65, y: 12, animal: "Lion's den", angle: 0 },    // Lion
+                    { x: 85, y: 12, animal: "Bear's cave", angle: 180 }, // Bear
+                    { x: 85, y: 75, animal: "Panda place", angle: 270 }  // Panda
+                ]
+            },
+            "plants.jpg": {
+                imagePath: "plants.jpg",
+                // Estimate target for plants.jpg, e.g., Adult Sunflower
+                mainTarget: { name: "Adult Plant", x: 50, y: 50 }, // Center for example
+                redArrowHotspot: null, // No special spots defined for this map yet
+                yellowArrowHotspot: null,
+                zooEntranceTarget: null,
+                tourPath: []
+            }
+        };
+        let currentTarget = mapData[currentMap].mainTarget;
+
+        const commandTranslations = {
+            'F': '⬆ Fwd', 'B': '⬇ Bwd', 'L': '⬅ Left', 'R': '➡ Right',
+            'PLAY_REC': '🎤 Play Rec', 'DANCE': '💃 Dance'
+        };
+
+        function speak(text) {
+            feedbackElement.textContent = "Bot: " + text;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                // Optional: configure voice, rate, pitch
+                // const voices = speechSynthesis.getVoices();
+                // utterance.voice = voices.find(v => v.lang === 'en-US'); // Example
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                speechSynthesis.speak(utterance);
+            } else {
+                console.warn("Speech synthesis not supported in this browser.");
+            }
+        }
+
+        function updateBotVisuals() {
+            const modelWidth = modelViewer.offsetWidth;
+            const modelHeight = modelViewer.offsetHeight;
+            modelViewer.style.left = `calc(${botState.x}% - ${modelWidth / 2}px)`;
+            modelViewer.style.top = `calc(${botState.y}% - ${modelHeight / 2}px)`;
+            // Model GLB Y-up, default front is +Z.
+            // Map: 0 deg = Up (-Y screen), 90 deg = Right (+X screen)
+            // Model yaw: 0 deg for +Z.
+            // To point Up on screen (-Y), model yaw should be 180 if its +Z is "forward"
+            // To point Right on screen (+X), model yaw should be -90 or 270
+            // This mapping is crucial and depends on the GLB's axis.
+            // Let's try: map angle 0 (Up) -> model yaw 180. map angle 90 (Right) -> model yaw 270 (-90)
+            let modelYaw = (botState.angle + 180) % 360; // Tentative adjustment
+            modelViewer.orientation = `0deg ${modelYaw}deg 0deg`;
+            // console.log(`Bot state: x=${botState.x.toFixed(1)}%, y=${botState.y.toFixed(1)}%, angle=${botState.angle}, modelYaw=${modelYaw}`);
+        }
+
+        function changeMap() {
+            currentMap = mapSelector.value;
+            mapContainer.style.backgroundImage = `url('${mapData[currentMap].imagePath}')`;
+            currentTarget = mapData[currentMap].mainTarget;
+            awaitingZooTourStart = false;
+            botState.isMovingAutomated = false;
+            clearProgram(true); // Clear program and reset bot
+            feedbackElement.textContent = `Map changed to ${currentMap}. Program TaleBot for the ${currentTarget.name}!`;
+        }
+
+        function updateProgramDisplay() {
+            const display = document.getElementById('program-sequence-display');
+            display.innerHTML = '';
+            program.forEach(cmd => {
+                const item = document.createElement('div');
+                item.textContent = commandTranslations[cmd] || cmd;
+                item.className = 'program-block-item';
+                display.appendChild(item);
+            });
+            if (program.length === 0) display.textContent = "(empty)";
+            document.getElementById('repeat-display').textContent = `Repeat: ${repeatCount}x`;
+        }
+
+        function addCommand(cmd) {
+            if (botState.isMovingAutomated) return;
+            if (program.length < 15) {
+                program.push(cmd);
+                updateProgramDisplay();
+                feedbackElement.textContent = `"${commandTranslations[cmd] || cmd}" added.`;
+            } else {
+                feedbackElement.textContent = "Program full!";
+            }
+        }
+
+        function clearProgram(clearAll, isDeleteLastButton = false) {
+            if (botState.isMovingAutomated) return;
+            if (clearAll) {
+                program = [];
+                feedbackElement.textContent = "Program cleared.";
+            } else if (isDeleteLastButton && program.length > 0) {
+                const removedCmd = program.pop();
+                feedbackElement.textContent = `"${commandTranslations[removedCmd] || removedCmd}" removed.`;
+            } else if (program.length > 0 && !isDeleteLastButton) { // from delete last call, not button
+                 program.pop();
+            }
+            resetBotStateAndVisuals();
+            updateProgramDisplay();
+        }
+        
+        function changeRepeat(value) {
+            if (botState.isMovingAutomated) return;
+            repeatCount += value;
+            if (repeatCount < 1) repeatCount = 1;
+            if (repeatCount > 5) repeatCount = 5;
+            updateProgramDisplay();
+        }
+
+        function recordVoice() {
+            if (botState.isMovingAutomated) return;
+            const msg = window.prompt("Enter your short voice message:", recordedMessage);
+            if (msg !== null) {
+                recordedMessage = msg.substring(0, 100);
+                feedbackElement.textContent = "Voice message 'recorded'!";
+            }
+        }
+
+        function resetBotStateAndVisuals() {
+            botState.x = 15; botState.y = 88; botState.angle = 0; // Default start
+            updateBotVisuals();
+        }
+        
+        async function autoMoveTo(targetX, targetY, targetAngle, speed = 0.5) { // speed in % per frame (approx)
+            botState.isMovingAutomated = true;
+            // Simple direct path, turn then move
+            // 1. Turn to face the general direction of the target
+            const dx = targetX - botState.x;
+            const dy = targetY - botState.y;
+            let angleToTarget = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360; // Angle for math.atan2 to our system
+
+            // Animate turn (simplified, could be smoother)
+            while (Math.abs(botState.angle - angleToTarget) > 5 && Math.abs(botState.angle - angleToTarget) < 355) {
+                let diff = angleToTarget - botState.angle;
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+                botState.angle = (botState.angle + Math.sign(diff) * 5 + 360) % 360; // Turn in 5deg steps
+                updateBotVisuals();
+                await new Promise(r => setTimeout(r, 50));
+            }
+            botState.angle = angleToTarget; // Snap to final angle
+            updateBotVisuals();
+            await new Promise(r => setTimeout(r, 200));
+
+
+            // 2. Move towards target
+            while (Math.sqrt(Math.pow(targetX - botState.x, 2) + Math.pow(targetY - botState.y, 2)) > speed * 2) {
+                const currentAngleRad = botState.angle * Math.PI / 180;
+                botState.x += Math.sin(currentAngleRad) * speed;
+                botState.y -= Math.cos(currentAngleRad) * speed; // -Y is up
+                
+                // Clamp to map boundaries (0-100 for x and y)
+                botState.x = Math.max(0, Math.min(100, botState.x));
+                botState.y = Math.max(0, Math.min(100, botState.y));
+
+                updateBotVisuals();
+                await new Promise(r => setTimeout(r, 30)); // Animation frame
+            }
+            botState.x = targetX;
+            botState.y = targetY;
+            // 3. Final turn to targetAngle
+            botState.angle = targetAngle;
+            updateBotVisuals();
+            await new Promise(r => setTimeout(r, 300));
+            // botState.isMovingAutomated = false; // Caller should set this
+        }
+
+
+        async function runProgram() {
+            if (botState.isMovingAutomated) return;
+            if (awaitingZooTourStart) {
+                awaitingZooTourStart = false;
+                botState.isMovingAutomated = true;
+                feedbackElement.textContent = "Starting Zoo Tour...";
+                const tourPath = mapData["zoo_map.jpg"].tourPath;
+                for (const stop of tourPath) {
+                    feedbackElement.textContent = `Going to ${stop.animal}...`;
+                    await autoMoveTo(stop.x, stop.y, stop.angle, 0.8); // Use a slightly faster speed for tour
+                    speak(`Hey, that's the ${stop.animal}.`);
+                    await new Promise(r => setTimeout(r, 2000)); // Pause at animal
+                }
+                speak("Tour finished! Hope you enjoyed it!");
+                botState.isMovingAutomated = false;
+                resetBotStateAndVisuals();
+                return;
+            }
+
+            if (program.length === 0) {
+                feedbackElement.textContent = "Program is empty!"; return;
+            }
+            botState.isMovingAutomated = true;
+            feedbackElement.textContent = "Running program...";
+            
+            for (let r = 0; r < repeatCount; r++) {
+                if (repeatCount > 1) feedbackElement.textContent = `Running iteration ${r + 1} of ${repeatCount}...`;
+                resetBotStateAndVisuals(); // Reset for each full program sequence
+
+                for (let i = 0; i < program.length; i++) {
+                    const cmd = program[i];
+                    feedbackElement.textContent = `Executing: ${commandTranslations[cmd] || cmd}`;
+                    await executeCommand(cmd);
+                    await new Promise(resolve => setTimeout(resolve, 700)); 
+                }
+            }
+
+            // Check if bot reached current main target
+            const dx = botState.x - currentTarget.x;
+            const dy = botState.y - currentTarget.y;
+            if (Math.sqrt(dx*dx + dy*dy) < targetTolerance) {
+                speak(`Success! Reached the ${currentTarget.name}!`);
+                feedbackElement.style.color = "green";
+                await executeCommand('DANCE'); // Celebrate
+            } else {
+                speak(`Oops! Didn't reach the ${currentTarget.name}. Try again.`);
+                feedbackElement.style.color = "red";
+            }
+            botState.isMovingAutomated = false;
+        }
+
+        async function executeCommand(cmd) { // Now async for dance/play_rec delays
+            let newX = botState.x, newY = botState.y;
+            switch (cmd) {
+                case 'F':
+                    if (botState.angle === 0) newY -= stepPercentage; else if (botState.angle === 90) newX += stepPercentage;
+                    else if (botState.angle === 180) newY += stepPercentage; else if (botState.angle === 270) newX -= stepPercentage;
+                    break;
+                case 'B':
+                    if (botState.angle === 0) newY += stepPercentage; else if (botState.angle === 90) newX -= stepPercentage;
+                    else if (botState.angle === 180) newY -= stepPercentage; else if (botState.angle === 270) newX += stepPercentage;
+                    break;
+                case 'L': botState.angle = (botState.angle - 90 + 360) % 360; break;
+                case 'R': botState.angle = (botState.angle + 90) % 360; break;
+                case 'PLAY_REC':
+                    if (recordedMessage) speak(recordedMessage); else speak("Nothing recorded.");
+                    await new Promise(r => setTimeout(r, recordedMessage.length * 50 + 500)); // Delay based on message length
+                    break;
+                case 'DANCE':
+                    speak("Dancing!");
+                    const originalAngle = botState.angle;
+                    for (let i=0; i<4; i++) { // Simple spin and wiggle
+                        botState.angle = (botState.angle + 90) % 360; updateBotVisuals(); await new Promise(r => setTimeout(r, 150));
+                    }
+                    botState.angle = originalAngle; updateBotVisuals();
+                    break;
+            }
+            botState.x = Math.max(5, Math.min(95, newX)); // Clamp within 5-95% to keep bot mostly on map
+            botState.y = Math.max(5, Math.min(95, newY));
+            updateBotVisuals();
+        }
+
+        // --- Dragging Logic ---
+        mapContainer.addEventListener('pointerdown', (e) => {
+            if (botState.isMovingAutomated) return;
+            // Check if pointerdown is on the model (approx)
+            const rect = modelViewer.getBoundingClientRect();
+            const mapRect = mapContainer.getBoundingClientRect();
+            // Check if click is within the visual bounds of the model
+            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                isDragging = true;
+                mapContainer.classList.add('dragging');
+                modelViewer.style.transition = 'none'; // Disable transition during drag
+
+                // Calculate offset from model center to mouse click
+                const modelCenterXpx = rect.left + rect.width / 2;
+                const modelCenterYpx = rect.top + rect.height / 2;
+                dragOffsetX = e.clientX - modelCenterXpx;
+                dragOffsetY = e.clientY - modelCenterYpx;
+            }
+        });
+
+        document.addEventListener('pointermove', (e) => {
+            if (!isDragging || botState.isMovingAutomated) return;
+            e.preventDefault();
+            const mapRect = mapContainer.getBoundingClientRect();
+            let newMapX = e.clientX - mapRect.left - dragOffsetX; // Adjust by offset
+            let newMapY = e.clientY - mapRect.top - dragOffsetY;  // Adjust by offset
+
+            botState.x = (newMapX / mapRect.width) * 100;
+            botState.y = (newMapY / mapRect.height) * 100;
+
+            botState.x = Math.max(0, Math.min(100, botState.x)); // Clamp to 0-100%
+            botState.y = Math.max(0, Math.min(100, botState.y));
+            updateBotVisuals();
+        });
+
+        document.addEventListener('pointerup', () => {
+            if (isDragging) {
+                isDragging = false;
+                mapContainer.classList.remove('dragging');
+                modelViewer.style.transition = ''; // Re-enable CSS transitions if any were defined
+                checkHotspotInteraction();
+            }
+        });
+        
+        function checkHotspotInteraction() {
+            if (currentMap !== "zoo_map.jpg" || botState.isMovingAutomated) return; // Only for zoo map now
+
+            const { redArrowHotspot, yellowArrowHotspot, zooEntranceTarget } = mapData["zoo_map.jpg"];
+            const x = botState.x; const y = botState.y;
+
+            if (redArrowHotspot && x >= redArrowHotspot.xMin && x <= redArrowHotspot.xMax && y >= redArrowHotspot.yMin && y <= redArrowHotspot.yMax) {
+                speak("Hey, that's the zoo map!"); // Changed from "Hey, that's the zoo"
+                awaitingZooTourStart = false;
+            } else if (yellowArrowHotspot && x >= yellowArrowHotspot.xMin && x <= yellowArrowHotspot.xMax && y >= yellowArrowHotspot.yMin && y <= yellowArrowHotspot.yMax) {
+                speak("Let's take a tour in the zoo, I will guide you.");
+                botState.isMovingAutomated = true; // Prevent other actions
+                autoMoveTo(zooEntranceTarget.x, zooEntranceTarget.y, zooEntranceTarget.angle, 0.7).then(() => {
+                    speak("Ok, I'm ready, are you? Press Go to start the tour!");
+                    awaitingZooTourStart = true;
+                    botState.isMovingAutomated = false;
+                });
+            }
+        }
+
+        // Initial setup
+        window.onload = () => {
+            changeMap(); // Load default map and set initial bot position
+            resetBotStateAndVisuals();
+            updateProgramDisplay();
+        };
+
+    </script>
+</body>
+</html>

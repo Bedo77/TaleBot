@@ -1,0 +1,173 @@
+body { 
+    font-family: 'Arial', sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    margin-top: 10px; 
+    background-color: #eef6fc; 
+}
+.main-layout { 
+    display: flex; 
+    gap: 20px; 
+    align-items: flex-start; 
+    padding: 10px; 
+    width: 100%;
+    max-width: 1200px; 
+    box-sizing: border-box;
+}
+
+.map-section-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-basis: 620px; 
+    flex-shrink: 0; 
+}
+#map-selector { 
+    padding: 8px; 
+    border-radius: 5px; 
+    border: 1px solid #ccc; 
+    font-size: 1em; 
+    margin-bottom: 5px; 
+}
+
+#map-container {
+    width: 600px; 
+    height: 450px; 
+    border: 3px solid #0056b3;
+    position: relative;
+    background-size: contain; 
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: crosshair; 
+}
+#map-container.dragging-bot { cursor: grabbing; }
+
+#talebot-viewer {
+    width: 50px; 
+    height: 50px;
+    position: absolute;
+    pointer-events: auto; 
+    cursor: grab; 
+}
+ #talebot-viewer.dragging { cursor: grabbing; }
+
+#teacher-target-marker {
+    width: 20px; height: 20px;
+    background-color: rgba(255, 0, 0, 0.7);
+    border: 2px solid darkred;
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%); 
+    pointer-events: none;
+    display: none; 
+}
+       
+.controls-and-program-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1; 
+    min-width: 240px; 
+}
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px; 
+    border-radius: 15px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%; 
+    box-sizing: border-box;
+}
+.command-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px; 
+    width: 100%;
+    max-width: 210px; 
+    margin-bottom: 10px;
+}
+.controls-panel button.grid-btn { 
+    width: 60px; height: 60px; 
+    border-radius: 12px; 
+    border: none;
+    font-size: 1.8em; 
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.controls-panel button.grid-btn:active { transform: scale(0.95); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+
+.btn-clear { background-color: #d9534f; } 
+.btn-fwd { background-color: #FF7F50; } 
+.btn-repeat { background-color: #5cb85c; } 
+.btn-left { background-color: #5bc0de; } 
+.btn-go { background-color: #ffc107; color: #333; font-size: 1.5em; font-weight: bold;} 
+.btn-right { background-color: #5bc0de; } 
+.btn-record { background-color: #607D8B; } 
+.btn-bwd { background-color: #4CAF50; } 
+.btn-dance { background-color: #9c27b0; } 
+
+.indicator-dots-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px; 
+    margin-bottom: 8px; 
+    height: 15px; 
+}
+.indicator-dot {
+    width: 10px; height: 10px;
+    background-color: #ddd; 
+    border-radius: 50%; margin: 0 3px;
+    transition: background-color 0.3s;
+}
+.indicator-dot.active { background-color: #007bff; }
+
+.other-controls { width: 100%; max-width: 210px; display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+.other-controls button { width: 100%; height: auto; padding: 10px; font-size: 0.9em; border-radius: 8px; color:white; border:none; cursor:pointer; font-weight:bold;}
+.btn-play-rec { background-color: #43A047; } 
+.btn-clear-all-program { background-color: #c9302c; }
+#repeat-display { text-align: center; font-weight: bold; margin: 5px 0; font-size: 0.9em; }
+
+.teacher-customization { margin-top:10px; padding:10px; background-color:#f0f0f0; border-radius:5px; width:100%; max-width: 210px; box-sizing: border-box;}
+.teacher-customization label { display:block; margin-bottom:5px; font-weight:bold; font-size: 0.9em; }
+.teacher-customization input[type="text"] { width:calc(100% - 12px); padding:6px; border-radius:3px; border:1px solid #ccc;}
+        
+.post-drag-rotate-controls { margin-top: 5px; text-align: center; }
+.post-drag-rotate-controls button {
+    font-size: 1.5em; width: 45px; height: 45px; margin: 0 5px;
+    background-color: #6c757d; color:white; border-radius:50%; border:none; cursor:pointer;
+}
+
+.program-display { 
+    border: 1px solid #ccc; padding: 15px; 
+    border-radius: 8px; background-color: #f8f9fa; 
+    width: 100%; box-sizing: border-box;
+}
+.program-display h2 { margin-top: 0; font-size: 1.1em; color: #333;}
+#program-sequence-display { 
+    min-height: 100px; 
+    background-color: #fff; padding: 8px; 
+    border-radius: 3px; border: 1px dashed #ddd; font-size: 0.9em;
+    overflow-y: auto; 
+    max-height: 150px; 
+}
+.program-block-item { background-color: #007bff; color: white; padding: 4px 6px; margin: 3px 0; border-radius: 3px; display: block;}
+
+#feedback { 
+    margin-top: 10px; font-weight: bold; 
+    min-height: 22px; text-align: center; 
+    font-size: 1em; color: #0056b3; width: 100%;
+}
